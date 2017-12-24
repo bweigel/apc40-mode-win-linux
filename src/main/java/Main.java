@@ -39,6 +39,8 @@ import javax.sound.midi.*;
 
 public class Main extends Application {
     private static final String APC40_NAME = "APC40";
+    private static final String APC20_NAME = "APC20";
+
     private final Text myStatusText = new Text("Select mode");
 
     public static void main(String[] args)
@@ -62,7 +64,7 @@ public class Main extends Application {
         HBox modesBox = new HBox();
         modesBox.setPadding(new Insets(12));
         modesBox.setSpacing(10);
-        for (APC40Mode mode : APC40Mode.values()) {
+        for (APCMode mode : APCMode.values()) {
             Button button = new Button(mode.toString());
             button.setOnAction(new ModeButtonClickHandler(mode));
             modesBox.getChildren().add(button);
@@ -91,20 +93,22 @@ public class Main extends Application {
         dialogStage.show();
     }
 
-    private synchronized void applyMode(APC40Mode mode)
+    private synchronized void applyMode(APCMode mode)
             throws MidiUnavailableException, InvalidMidiDataException {
         MidiDevice midiOutputDevice = getMidiOutputDevice();
+
         if (midiOutputDevice != null) {
             midiOutputDevice.open();
             Receiver midiOutputReceiver = midiOutputDevice.getReceiver();
             byte[] message = {(byte) 0xf0, 0x47, 0x00, 0x73, 0x60, 0x00, 0x04, mode.getByte(), 0x08, 0x04, 0x01, (byte) 0xf7};
+
             SysexMessage sysexMessage = new SysexMessage(message, message.length);
             midiOutputReceiver.send(sysexMessage, -1);
             midiOutputReceiver.close();
             midiOutputDevice.close();
             printMessage("\"" + mode.toString() + "\" is turned on");
         } else {
-            printMessage(APC40_NAME + " not found");
+            printMessage("No supported device found");
         }
     }
 
@@ -112,8 +116,13 @@ public class Main extends Application {
             throws MidiUnavailableException {
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
         MidiOutDeviceProvider provider = new MidiOutDeviceProvider();
+
+        System.out.println("Searching Mid-devices...");
         for (MidiDevice.Info info : infos) {
-            if (info.getName().contains(APC40_NAME) && provider.isDeviceSupported(info)) {
+            System.out.println("MIDI Device Info => " + info.getName());
+            String deviceName = info.getName();
+
+            if ((deviceName.contains(APC40_NAME) || deviceName.contains(APC20_NAME)) && provider.isDeviceSupported(info)) {
                 return MidiSystem.getMidiDevice(info);
             }
         }
@@ -125,7 +134,7 @@ public class Main extends Application {
         myStatusText.setText(message);
     }
 
-    private enum APC40Mode {
+    private enum APCMode {
         Generic, AbletonLive, AlternateAbletonLive;
 
         public byte getByte() {
@@ -155,9 +164,9 @@ public class Main extends Application {
     }
 
     private class ModeButtonClickHandler implements EventHandler<ActionEvent> {
-        private final APC40Mode mode;
+        private final APCMode mode;
 
-        public ModeButtonClickHandler(APC40Mode mode) {
+        public ModeButtonClickHandler(APCMode mode) {
             this.mode = mode;
         }
 
