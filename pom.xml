@@ -34,16 +34,6 @@
         <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>javafx</groupId>
-            <artifactId>jfxrt</artifactId>
-            <version>${java.version}</version>
-            <systemPath>${java.home}/lib/jfxrt.jar</systemPath>
-            <scope>system</scope>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
