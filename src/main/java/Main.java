@@ -101,12 +101,20 @@ public class Main extends Application {
             midiOutputDevice.getMidiDevice().open();
             Receiver midiOutputReceiver = midiOutputDevice.getMidiDevice().getReceiver();
 
-            byte[] message = null;
-            if (midiOutputDevice.getDeviceName().equals(APC40_NAME)) {
+            byte[] message = {(byte) 0xf0, 0x47, 0x00, 0x73, 0x60, 0x00, 0x04, mode.getByte(), 0x08, 0x04, 0x01, (byte) 0xf7};
+
+            if (midiOutputDevice.getDeviceName().contains(APC40_NAME)) {
                 message = new byte[]{(byte) 0xf0, 0x47, 0x00, 0x73, 0x60, 0x00, 0x04, mode.getByte(), 0x08, 0x04, 0x01, (byte) 0xf7};
-            } else if (midiOutputDevice.getDeviceName().equals(APC20_NAME)) {
-                message = new byte[]{(byte) 0xF0, 0x47, 0x7F, 0x7B, 0x60, 0x00, 0x04, mode.getByte(), 0x01, 0x01, 0x01, (byte) 0xf7};
+            } else if (midiOutputDevice.getDeviceName().contains(APC20_NAME)) {
+
+                message = new byte[]{(byte) 0xf0, 0x47, 0x7f, 0x7b, 0x60, 0x00, 0x04, mode.getByte(), 0x01, 0x01, 0x01, (byte) 0xf7};
             }
+
+
+            for (int j=0; j<message.length; j++) {
+                System.out.format("%02X ", message[j]);
+            }
+            System.out.println();
 
             SysexMessage sysexMessage = new SysexMessage(message, message.length);
             midiOutputReceiver.send(sysexMessage, -1);
