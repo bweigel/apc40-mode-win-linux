@@ -95,24 +95,30 @@ public class Main extends Application {
 
     private synchronized void applyMode(APCMode mode)
             throws MidiUnavailableException, InvalidMidiDataException {
-        MidiDevice midiOutputDevice = getMidiOutputDevice();
+        APC midiOutputDevice = getMidiOutputDevice();
 
         if (midiOutputDevice != null) {
-            midiOutputDevice.open();
-            Receiver midiOutputReceiver = midiOutputDevice.getReceiver();
-            byte[] message = {(byte) 0xf0, 0x47, 0x00, 0x73, 0x60, 0x00, 0x04, mode.getByte(), 0x08, 0x04, 0x01, (byte) 0xf7};
+            midiOutputDevice.getMidiDevice().open();
+            Receiver midiOutputReceiver = midiOutputDevice.getMidiDevice().getReceiver();
+
+            byte[] message = null;
+            if (midiOutputDevice.getDeviceName().equals(APC40_NAME)) {
+                message = new byte[]{(byte) 0xf0, 0x47, 0x00, 0x73, 0x60, 0x00, 0x04, mode.getByte(), 0x08, 0x04, 0x01, (byte) 0xf7};
+            } else if (midiOutputDevice.getDeviceName().equals(APC20_NAME)) {
+                message = new byte[]{(byte) 0xF0, 0x47, 0x7F, 0x7B, 0x60, 0x00, 0x04, mode.getByte(), 0x01, 0x01, 0x01, (byte) 0xf7};
+            }
 
             SysexMessage sysexMessage = new SysexMessage(message, message.length);
             midiOutputReceiver.send(sysexMessage, -1);
             midiOutputReceiver.close();
-            midiOutputDevice.close();
+            midiOutputDevice.getMidiDevice().close();
             printMessage("\"" + mode.toString() + "\" is turned on");
         } else {
             printMessage("No supported device found");
         }
     }
 
-    private MidiDevice getMidiOutputDevice()
+    private APC getMidiOutputDevice()
             throws MidiUnavailableException {
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
         MidiOutDeviceProvider provider = new MidiOutDeviceProvider();
@@ -123,7 +129,7 @@ public class Main extends Application {
             String deviceName = info.getName();
 
             if ((deviceName.contains(APC40_NAME) || deviceName.contains(APC20_NAME)) && provider.isDeviceSupported(info)) {
-                return MidiSystem.getMidiDevice(info);
+                return new APC().APC(deviceName, MidiSystem.getMidiDevice(info));
             }
         }
         return null;
